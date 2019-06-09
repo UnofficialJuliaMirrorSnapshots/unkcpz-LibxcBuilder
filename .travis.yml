@@ -1,0 +1,58 @@
+
+language: julia
+os:
+  - linux
+julia:
+  - 1.0
+  - 1.1
+notifications:
+  email: false
+git:
+  depth: 99999999
+cache:
+  timeout: 1000
+  directories:
+    - downloads
+env:
+  global:
+    - BINARYBUILDER_DOWNLOADS_CACHE=downloads
+    - BINARYBUILDER_AUTOMATIC_APPLE=true
+  matrix:
+    - TARGET=x86_64-linux-gnu
+    - TARGET=i686-linux-gnu
+    # - TARGET=x86_64-apple-darwin14
+    # - TARGET=x86_64-unknown-freebsd
+    # will be supported in future
+    # - TARGET=x86_64-w64-mingw32
+    # - TARGET=i686-w64-mingw32
+sudo: required
+before_script:
+  - julia -e 'using Pkg; pkg"add BinaryProvider"; pkg"add BinaryBuilder#master"; Pkg.build()'
+script:
+  - julia build_tarballs.jl
+
+jobs:
+  include:
+    - stage: deploy
+      if: "tag =~ ^v[0-9]+\\.[0-9]+\\.[0-9]+(-)?[0-9]*$"
+      julia: 1.0
+      sudo: required
+      cache:
+        timeout: 1000
+        directories:
+          - downloads
+      sudo: required
+      before_script:
+        - julia -e 'using Pkg; pkg"add BinaryProvider"; pkg"add BinaryBuilder#master"; Pkg.build()'
+      script:
+        - julia build_tarballs.jl
+      deploy:
+        provider: releases
+        api_key:
+          secure: AX0OLsuXsBBPpztNkXySiYItuDel6/bDf6dMU2wLHQQg1LQM2nbqJoQhzHk7nxLlWUEUZCqcpytABQTTD+5pPR77QXyDtpDZFvmSgqoebwoDNhxUHuhA5//WDKJk5fQWJuHG8ydRVFkF3znz6JCvZO2BOeR0y5VWwWZRaXc7g2MA2DMADFJPCGgaf2inwK/Cl4QLpuEZKGZawj86GuTWJRBSjO8odkSyrdsyeTts/y++uZdzM7KQrUhSWivZjWWScrSuRinBj/kXmrBQOe0ZRm/S3UpStN+CmKwCDhXQps6h4tp7qcvo4mZpLNoQJisk6ddWVdkgvPnE1micpJQrULF7xRYWYedpCWDzQXuNr0ASqEAZi/+aH2jHs6WsejYHTVx3LFLlEc/l/iE2+iYltxCkYS0SN92PqQklQHxCSGudmj+9WLyu/TvgZEx/nZrhbtZUR0OMc0XFmsYewLolrOH4R8bNVCdK/TLNqI8lD7jh64wDc/lfoN+1UdlHYvti4u7a1AjyrhNUlMlVdOKX4uRjhuu+r4ANUW2AuAr3wJV9uYBkbAOafHnbj7aRq1quTXP5BicWSBVWw8kOgoP45Zdql0/sdGarIj9yt1uO3Il0xqywXcR+RnpFQj9wjkNnKXbP7w63O2qPSG+/gIpzVjEwU+aUX74xN3d190kd/ao=
+        skip_cleanup: true
+        file_glob: true
+        file: products/*
+        on:
+          repo: unkcpz/LibxcBuilder
+          tags: true
