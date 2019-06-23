@@ -16,11 +16,8 @@ sources = [
 script = raw"""
 cd $WORKSPACE/srcdir
 cd libxc-4.3.4/
-mkdir _build
-cd _build/
-cmake -DCMAKE_INSTALL_PREFIX=$prefix \
-      -DCMAKE_TOOLCHAIN_FILE=/opt/$target/$target.toolchain \
-      ../
+autoreconf -i
+./configure --prefix=$prefix --host=$target --enable-shared
 make
 make install VERBOSE=1
 
@@ -32,8 +29,8 @@ platforms = [
     MacOS(:x86_64),
     Linux(:x86_64, libc=:glibc),
     Linux(:i686, libc=:glibc),
-    Windows(:i686),
-    Windows(:x86_64),
+    # Windows(:i686),
+    # Windows(:x86_64),
 ]
 
 # The products that we will ensure are always built
